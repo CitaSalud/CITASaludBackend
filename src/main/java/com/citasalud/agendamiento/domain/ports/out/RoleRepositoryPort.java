@@ -5,4 +5,5 @@ import java.util.Optional;
 
 public interface RoleRepositoryPort {
     Optional<Role> findByName(String name);
+    Optional<Role> findById(Short id);
 }

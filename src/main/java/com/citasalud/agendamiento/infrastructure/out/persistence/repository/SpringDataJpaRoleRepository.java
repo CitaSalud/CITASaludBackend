@@ -4,6 +4,6 @@ import com.citasalud.agendamiento.infrastructure.out.persistence.entity.RoleEnti
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
-public interface SpringDataJpaRoleRepository extends JpaRepository<RoleEntity, Integer> {
+public interface SpringDataJpaRoleRepository extends JpaRepository<RoleEntity, Short> {
     Optional<RoleEntity> findByName(String name);
 }

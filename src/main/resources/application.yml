@@ -25,3 +25,6 @@ management:
         include: health,info,metrics,prometheus
 app:
   env: dev
+  jwt:
+    secret: "MiClaveSecretaSuperLargaYComplejaParaElCursoDeDesarrolloDeSoftware"
+    expiration-ms: 3600000

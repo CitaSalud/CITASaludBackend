@@ -21,4 +21,9 @@ public class JpaRoleRepositoryAdapter implements RoleRepositoryPort {
     public Optional<Role> findByName(String name) {
         return roleRepository.findByName(name).map(roleMapper::toDomainModel);
     }
+
+    @Override
+    public Optional<Role> findById(Short id) {
+        return roleRepository.findById(id).map(roleMapper::toDomainModel);
+}
 }
