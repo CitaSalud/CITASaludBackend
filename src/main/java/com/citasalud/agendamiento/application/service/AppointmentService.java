@@ -1,11 +1,12 @@
 package com.citasalud.agendamiento.application.service;
 
+import com.citasalud.agendamiento.domain.ports.in.CancelAppointmentUseCase;
+import java.time.OffsetDateTime;
 import com.citasalud.agendamiento.domain.exception.*;
 import com.citasalud.agendamiento.domain.model.User;
 import com.citasalud.agendamiento.domain.ports.in.ModifyAppointmentUseCase;
 import com.citasalud.agendamiento.domain.ports.out.UserRepositoryPort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
 import com.citasalud.agendamiento.domain.model.Appointment;
 import com.citasalud.agendamiento.domain.model.AvailableSlotInstance;
 import com.citasalud.agendamiento.domain.ports.in.ScheduleAppointmentUseCase;
@@ -16,15 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service
-public class AppointmentService implements ScheduleAppointmentUseCase, ModifyAppointmentUseCase {
+public class AppointmentService
+        implements ScheduleAppointmentUseCase, ModifyAppointmentUseCase, CancelAppointmentUseCase {
 
     private final AppointmentRepositoryPort appointmentRepositoryPort;
     private final AvailableSlotInstanceRepositoryPort availableSlotInstanceRepositoryPort;
-    private final UserRepositoryPort userRepositoryPort; 
+    private final UserRepositoryPort userRepositoryPort;
 
     public AppointmentService(AppointmentRepositoryPort appointmentRepositoryPort,
             AvailableSlotInstanceRepositoryPort availableSlotInstanceRepositoryPort,
-            UserRepositoryPort userRepositoryPort) { 
+            UserRepositoryPort userRepositoryPort) {
         this.appointmentRepositoryPort = appointmentRepositoryPort;
         this.availableSlotInstanceRepositoryPort = availableSlotInstanceRepositoryPort;
         this.userRepositoryPort = userRepositoryPort;
@@ -92,6 +94,38 @@ public class AppointmentService implements ScheduleAppointmentUseCase, ModifyApp
 
         availableSlotInstanceRepositoryPort.save(oldSlot);
         availableSlotInstanceRepositoryPort.save(newSlot);
+        return appointmentRepositoryPort.save(appointment);
+    }
+
+    @Override
+    @Transactional
+    public Appointment cancelAppointment(UUID appointmentId, String userEmail, String reason) {
+
+        User affiliate = userRepositoryPort.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + userEmail));
+
+        Appointment appointment = appointmentRepositoryPort.findById(appointmentId)
+                .orElseThrow(() -> new AppointmentNotFoundException("La cita con ID " + appointmentId + " no existe."));
+
+        if (!appointment.getAffiliateId().equals(affiliate.getId())) {
+            throw new UnauthorizedAppointmentAccessException("No tiene permisos para cancelar esta cita.");
+        }
+
+        if (!"scheduled".equalsIgnoreCase(appointment.getStatus())) {
+            throw new CancellationNotAllowedException(
+                    "No se puede cancelar una cita que no esté en estado 'scheduled'. Estado actual: "
+                            + appointment.getStatus());
+        }
+
+        AvailableSlotInstance slot = availableSlotInstanceRepositoryPort
+                .findById(appointment.getAvailableSlotInstanceId())
+                .orElseThrow(() -> new SlotNotFoundException("El slot de la cita no se encontró (ID: "
+                        + appointment.getAvailableSlotInstanceId() + "). Error de integridad de datos."));
+
+        slot.setStatus("available");
+        appointment.setStatus("cancelled");
+
+        availableSlotInstanceRepositoryPort.save(slot);
         return appointmentRepositoryPort.save(appointment);
     }
 }

@@ -1,11 +1,11 @@
 package com.citasalud.agendamiento.infrastructure.in.web.controller;
 
+import com.citasalud.agendamiento.domain.ports.in.CancelAppointmentUseCase;
+import com.citasalud.agendamiento.infrastructure.in.web.dto.CancelAppointmentRequest;
 import com.citasalud.agendamiento.domain.ports.in.ModifyAppointmentUseCase;
 import com.citasalud.agendamiento.infrastructure.in.web.dto.ModifyAppointmentRequest;
-
 import java.security.Principal;
 import java.util.UUID;
-
 import com.citasalud.agendamiento.domain.model.Appointment;
 import com.citasalud.agendamiento.domain.ports.in.ScheduleAppointmentUseCase;
 import com.citasalud.agendamiento.infrastructure.in.web.dto.ScheduleAppointmentRequest;
@@ -19,11 +19,14 @@ public class AppointmentController {
 
     private final ScheduleAppointmentUseCase scheduleAppointmentUseCase;
     private final ModifyAppointmentUseCase modifyAppointmentUseCase;
+    private final CancelAppointmentUseCase cancelAppointmentUseCase;
 
     public AppointmentController(ScheduleAppointmentUseCase scheduleAppointmentUseCase,
-            ModifyAppointmentUseCase modifyAppointmentUseCase) {
+            ModifyAppointmentUseCase modifyAppointmentUseCase,
+            CancelAppointmentUseCase cancelAppointmentUseCase) {
         this.scheduleAppointmentUseCase = scheduleAppointmentUseCase;
         this.modifyAppointmentUseCase = modifyAppointmentUseCase;
+        this.cancelAppointmentUseCase = cancelAppointmentUseCase;
     }
 
     @PostMapping
@@ -51,5 +54,22 @@ public class AppointmentController {
         );
 
         return ResponseEntity.ok(modifiedAppointment);
+    }
+
+    @PatchMapping("/{appointmentId}/cancel")
+    public ResponseEntity<Appointment> cancelAppointment(
+            @PathVariable UUID appointmentId,
+            @RequestBody(required = false) CancelAppointmentRequest request,
+            Principal principal
+    ) {
+        String userEmail = principal.getName();
+        String reason = (request != null) ? request.getReason() : "Cancelada por el usuario";
+
+        Appointment cancelledAppointment = cancelAppointmentUseCase.cancelAppointment(
+                appointmentId,
+                userEmail,
+                reason);
+
+        return ResponseEntity.ok(cancelledAppointment);
     }
 }
