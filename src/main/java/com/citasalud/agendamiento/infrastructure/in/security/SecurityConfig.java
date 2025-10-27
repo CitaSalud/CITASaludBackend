@@ -42,8 +42,13 @@ public class SecurityConfig {
                 // --- Endpoints Públicos ---
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
-
+                .requestMatchers("/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-resources/**").permitAll()
                 // --- Endpoints Protegidos ---
+                .requestMatchers(HttpMethod.GET, "/api/v1/slots").authenticated()
+                .requestMatchers("/api/v1/appointments/**").authenticated()
                 // Todas las demás peticiones requieren autenticación
                 .anyRequest().authenticated()
             );
