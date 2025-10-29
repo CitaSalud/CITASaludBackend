@@ -4,17 +4,18 @@
 
 -- Roles table (optional)
 CREATE TABLE roles (
-  role_id SMALLINT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(255) UNIQUE NOT NULL,
-  description VARCHAR(255)
+  role_id SMALLSERIAL PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL,
+  description TEXT
 );
 
+-- Insert roles data - compatible with both PostgreSQL and H2
+-- In PostgreSQL, ON CONFLICT prevents duplicates; in H2, unique constraint handles it
 INSERT INTO roles(name, description)
   VALUES ('affiliate', 'Afiliado'),
          ('professional', 'Profesional'),
          ('coordinator', 'Coordinador'),
-         ('admin', 'Administrador')
-ON CONFLICT DO NOTHING;
+         ('admin', 'Administrador');
 
 -- Users
 CREATE TABLE users (
