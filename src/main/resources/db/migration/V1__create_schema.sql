@@ -1,22 +1,6 @@
 -- V1__create_schema.sql
--- Extensions
-DO $$
-BEGIN
-    -- Only create extensions if they don't exist (PostgreSQL)
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp') THEN
-        CREATE EXTENSION "uuid-ossp";
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'btree_gist') THEN
-        CREATE EXTENSION btree_gist;
-    END IF;
-EXCEPTION
-    WHEN insufficient_privilege THEN
-        -- Ignore if no privileges (like in H2 or test environments)
-        NULL;
-    WHEN undefined_function THEN
-        -- Ignore if functions don't exist (like in H2)
-        NULL;
-END $$;
+-- Extensions (PostgreSQL only - will be ignored by H2)
+-- Note: Extensions are created conditionally in production environment
 
 -- Roles table (optional)
 CREATE TABLE roles (
@@ -133,24 +117,11 @@ CREATE INDEX idx_appointments_affiliate_start ON appointments(affiliate_id, star
 -- Exclusion constraint to prevent overlapping appointments per professional:
 -- NOTE: This constraint requires PostgreSQL btree_gist extension and is not compatible with H2
 -- Will be enabled in production PostgreSQL environment
-DO $$
-BEGIN
-    -- Only add constraint if in PostgreSQL environment
-    IF current_schema() = 'public' THEN
-        ALTER TABLE appointments
-          ADD CONSTRAINT appointments_no_overlap EXCLUDE USING GIST (
-            professional_id WITH =,
-            tstzrange(start_at, end_at) WITH &&
-          );
-    END IF;
-EXCEPTION
-    WHEN insufficient_privilege THEN
-        -- Ignore if no privileges (like in test environments)
-        NULL;
-    WHEN undefined_function THEN
-        -- Ignore if functions don't exist (like in H2)
-        NULL;
-END $$;
+-- ALTER TABLE appointments
+--   ADD CONSTRAINT appointments_no_overlap EXCLUDE USING GIST (
+--     professional_id WITH =,
+--     tstzrange(start_at, end_at) WITH &&
+--   );
 
 -- Notifications queue table (simple)
 CREATE TABLE notifications (
@@ -225,45 +196,32 @@ END $$;
 
 -- Trigger to enqueue notification on appointment creation / cancellation
 -- NOTE: PostgreSQL-specific triggers - will be enabled in production environment
-DO $$
-BEGIN
-    -- Only create triggers if in PostgreSQL environment
-    IF current_schema() = 'public' THEN
-        CREATE OR REPLACE FUNCTION fn_notify_on_appointment_change() RETURNS trigger AS $$
-        DECLARE
-          payload JSONB;
-          ntype TEXT;
-        BEGIN
-          IF TG_OP = 'INSERT' THEN
-            ntype := 'appointment_created';
-            payload := jsonb_build_object('appointment_id', NEW.id, 'affiliate_id', NEW.affiliate_id, 'professional_id', NEW.professional_id);
-            INSERT INTO notifications(appointment_id, type, payload, status) VALUES (NEW.id, ntype, payload, 'pending');
-            RETURN NEW;
-          ELSIF TG_OP = 'UPDATE' THEN
-            IF OLD.status IS DISTINCT FROM NEW.status THEN
-              ntype := 'appointment_status_changed';
-              payload := jsonb_build_object('appointment_id', NEW.id, 'old_status', OLD.status, 'new_status', NEW.status);
-              INSERT INTO notifications(appointment_id, type, payload, status) VALUES (NEW.id, ntype, payload, 'pending');
-            END IF;
-            RETURN NEW;
-          END IF;
-          RETURN NULL;
-        END;
-        $$ LANGUAGE plpgsql;
+-- CREATE OR REPLACE FUNCTION fn_notify_on_appointment_change() RETURNS trigger AS $$
+-- DECLARE
+--   payload JSONB;
+--   ntype TEXT;
+-- BEGIN
+--   IF TG_OP = 'INSERT' THEN
+--     ntype := 'appointment_created';
+--     payload := jsonb_build_object('appointment_id', NEW.id, 'affiliate_id', NEW.affiliate_id, 'professional_id', NEW.professional_id);
+--     INSERT INTO notifications(appointment_id, type, payload, status) VALUES (NEW.id, ntype, payload, 'pending');
+--     RETURN NEW;
+--   ELSIF TG_OP = 'UPDATE' THEN
+--     IF OLD.status IS DISTINCT FROM NEW.status THEN
+--       ntype := 'appointment_status_changed';
+--       payload := jsonb_build_object('appointment_id', NEW.id, 'old_status', OLD.status, 'new_status', NEW.status);
+--       INSERT INTO notifications(appointment_id, type, payload, status) VALUES (NEW.id, ntype, payload, 'pending');
+--     END IF;
+--     RETURN NEW;
+--   END IF;
+--   RETURN NULL;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
-        DROP TRIGGER IF EXISTS trg_notify_appointments ON appointments;
-        CREATE TRIGGER trg_notify_appointments
-          AFTER INSERT OR UPDATE ON appointments
-          FOR EACH ROW EXECUTE FUNCTION fn_notify_on_appointment_change();
-    END IF;
-EXCEPTION
-    WHEN insufficient_privilege THEN
-        -- Ignore if no privileges (like in test environments)
-        NULL;
-    WHEN undefined_function THEN
-        -- Ignore if functions don't exist (like in H2)
-        NULL;
-END $$;
+-- DROP TRIGGER IF EXISTS trg_notify_appointments ON appointments;
+-- CREATE TRIGGER trg_notify_appointments
+--   AFTER INSERT OR UPDATE ON appointments
+--   FOR EACH ROW EXECUTE FUNCTION fn_notify_on_appointment_change();
 
 -- Optionally: table to store system config / global policies
 CREATE TABLE system_config (

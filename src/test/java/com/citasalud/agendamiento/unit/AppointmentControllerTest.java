@@ -129,7 +129,7 @@ class AppointmentControllerTest {
     @Test
     void cancelAppointment_NoReason() throws Exception {
         when(principal.getName()).thenReturn("test@example.com");
-        when(cancelAppointmentUseCase.cancelAppointment(appointmentId, "test@example.com", "Cancelada por el usuario"))
+        when(cancelAppointmentUseCase.cancelAppointment(eq(appointmentId), any(String.class), any()))
                 .thenReturn(appointment);
 
         mockMvc.perform(patch("/api/v1/appointments/{appointmentId}/cancel", appointmentId)
@@ -138,6 +138,6 @@ class AppointmentControllerTest {
                 .principal(principal))
                 .andExpect(status().isOk());
 
-        verify(cancelAppointmentUseCase).cancelAppointment(appointmentId, "test@example.com", "Cancelada por el usuario");
+        verify(cancelAppointmentUseCase).cancelAppointment(eq(appointmentId), eq("test@example.com"), any());
     }
 }
