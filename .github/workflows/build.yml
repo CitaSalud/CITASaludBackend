@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cita-salud-agendamiento
-          path: artifacts/*.jar
+          path: target/*.jar
           retention-days: 30
 
   docker:
