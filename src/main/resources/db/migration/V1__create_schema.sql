@@ -19,7 +19,7 @@ INSERT INTO roles(name, description)
 
 -- Users
 CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT CASE WHEN current_schema() = 'public' THEN uuid_generate_v4() ELSE RANDOM_UUID() END,
+  id UUID PRIMARY KEY DEFAULT RANDOM_UUID(),
   email TEXT UNIQUE NOT NULL,
   nombre TEXT NOT NULL,
   telefono TEXT,
@@ -140,14 +140,14 @@ CREATE INDEX idx_notifications_status ON notifications(status, available_at);
 
 -- Audit logs
 CREATE TABLE audit_logs (
-  id BIGSERIAL PRIMARY KEY,
-  table_name TEXT NOT NULL,
-  record_id UUID,
-  operation TEXT NOT NULL, -- INSERT, UPDATE, DELETE
-  changed_by UUID,
-  changed_at TIMESTAMPTZ DEFAULT now(),
-  diff JSONB
-);
+   id BIGINT AUTO_INCREMENT PRIMARY KEY,
+   table_name TEXT NOT NULL,
+   record_id UUID,
+   operation TEXT NOT NULL, -- INSERT, UPDATE, DELETE
+   changed_by UUID,
+   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP(),
+   diff TEXT -- Changed from JSONB to TEXT for H2 compatibility
+ );
 
 CREATE INDEX idx_audit_table ON audit_logs(table_name, record_id);
 
@@ -226,8 +226,8 @@ END $$;
 
 -- Optionally: table to store system config / global policies
 CREATE TABLE system_config (
-  key TEXT PRIMARY KEY,
-  value TEXT,
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+   key TEXT PRIMARY KEY,
+   value TEXT,
+   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+ );
 
