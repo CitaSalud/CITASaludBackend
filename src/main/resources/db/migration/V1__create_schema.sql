@@ -4,9 +4,9 @@
 
 -- Roles table (optional)
 CREATE TABLE roles (
-  role_id SMALLSERIAL PRIMARY KEY,
-  name TEXT UNIQUE NOT NULL,
-  description TEXT
+  role_id SMALLINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(255) UNIQUE NOT NULL,
+  description VARCHAR(255)
 );
 
 INSERT INTO roles(name, description)
