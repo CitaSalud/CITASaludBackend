@@ -4,7 +4,7 @@
 
 -- Roles table (optional)
 CREATE TABLE roles (
-  role_id SMALLSERIAL PRIMARY KEY,
+  role_id SMALLINT PRIMARY KEY AUTO_INCREMENT,
   name TEXT UNIQUE NOT NULL,
   description TEXT
 );
