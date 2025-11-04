@@ -1,4 +1,4 @@
-package com.citasalud.agendamiento.unit;
+package com.citasalud.agendamiento.unit.service;
 
 import com.citasalud.agendamiento.application.service.SlotService;
 import com.citasalud.agendamiento.domain.model.AvailableSlotInstance;

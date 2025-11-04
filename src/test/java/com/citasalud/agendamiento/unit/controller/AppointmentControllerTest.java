@@ -1,4 +1,4 @@
-package com.citasalud.agendamiento.unit;
+package com.citasalud.agendamiento.unit.controller;
 
 import com.citasalud.agendamiento.domain.model.Appointment;
 import com.citasalud.agendamiento.domain.ports.in.CancelAppointmentUseCase;
