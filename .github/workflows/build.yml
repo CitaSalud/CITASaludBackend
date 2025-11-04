@@ -71,10 +71,13 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Analyze with SonarCloud
-        run: mvn -B verify sonar:sonar -Dsonar.projectKey=SamuelPuerta_CITASalud-Agendamiento -Dsonar.organization=samuelpuerta -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=$SONAR_TOKEN
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.organization=citasalud-codefactory \
+          -Dsonar.projectKey=CitaSalud_CITASaludBackend
 
   build:
     name: Build JAR
@@ -107,72 +110,72 @@ jobs:
           path: target/*.jar
           retention-days: 30
 
-  docker:
-    name: Build and Push Docker Image
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # docker:
+  #   name: Build and Push Docker Image
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Download JAR artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: cita-salud-agendamiento
-          path: artifacts/
+  #     - name: Download JAR artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: cita-salud-agendamiento
+  #         path: artifacts/
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+  #     - name: Log in to Docker Hub
+  #       uses: docker/login-action@v3
+  #       with:
+  #         username: ${{ secrets.DOCKER_USERNAME }}
+  #         password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/cita-salud-agendamiento:latest
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: .
+  #         push: true
+  #         tags: ${{ secrets.DOCKER_USERNAME }}/cita-salud-agendamiento:latest
 
-  security:
-    name: Security Scan with Snyk
-    needs: docker
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # security:
+  #   name: Security Scan with Snyk
+  #   needs: docker
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Run Snyk to check for vulnerabilities
-        uses: snyk/actions/maven@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --file=pom.xml
+  #     - name: Run Snyk to check for vulnerabilities
+  #       uses: snyk/actions/maven@master
+  #       continue-on-error: true
+  #       env:
+  #         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #       with:
+  #         args: --file=pom.xml
 
-      - name: Upload Snyk results
-        uses: actions/upload-artifact@v4
-        with:
-          name: snyk-results
-          path: .snyk
-          retention-days: 30
+  #     - name: Upload Snyk results
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: snyk-results
+  #         path: .snyk
+  #         retention-days: 30
 
-  deploy:
-    name: Deploy to Render
-    needs: docker
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  # deploy:
+  #   name: Deploy to Render
+  #   needs: docker
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Deploy to Render
-        run: |
-          curl -X POST \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{"serviceId": "${{ secrets.RENDER_SERVICE_ID }}"}' \
-            https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
+  #     - name: Deploy to Render
+  #       run: |
+  #         curl -X POST \
+  #           -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+  #           -H "Content-Type: application/json" \
+  #           -d '{"serviceId": "${{ secrets.RENDER_SERVICE_ID }}"}' \
+  #           https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
