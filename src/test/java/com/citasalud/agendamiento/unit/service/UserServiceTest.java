@@ -1,4 +1,4 @@
-package com.citasalud.agendamiento.unit;
+package com.citasalud.agendamiento.unit.service;
 
 import com.citasalud.agendamiento.application.service.UserService;
 import com.citasalud.agendamiento.domain.exception.UserAlreadyExistsException;
