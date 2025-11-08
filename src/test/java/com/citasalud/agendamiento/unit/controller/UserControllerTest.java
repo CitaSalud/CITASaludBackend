@@ -37,7 +37,7 @@ public class UserControllerTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        // ✅ Registramos el GlobalExceptionHandler
+        // Registramos el GlobalExceptionHandler
         mockMvc = MockMvcBuilders
                 .standaloneSetup(userController)
                 .setControllerAdvice(new GlobalExceptionHandler())
