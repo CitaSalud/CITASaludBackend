@@ -139,7 +139,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/cita-salud-agendamiento:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/citasalud-codefactory:latest
+
 
   # security:
   #   name: Security Scan with Snyk
